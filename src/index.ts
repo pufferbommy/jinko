@@ -59,8 +59,47 @@ app.post('/line-webhook', async (c) => {
           ],
         }
 
+        const tableData = await table.select().all()
+
+        const todayUsage = tableData.reduce((acc, record) => {
+          const amount = record.get('Amount');
+
+          if (amount) {
+            const date = new Date(record.get('Date') as string);
+            const today = new Date();
+            if (date.getDate() === today.getDate() &&
+                date.getMonth() === today.getMonth() &&
+                date.getFullYear() === today.getFullYear()) {
+              return acc + parseFloat(amount as string);
+            }
+          }
+
+          return acc;
+        }, 0)
+
         const bubble = createBubble('expense tracking', body, {
           headerColor: '#ffffbb',
+          footer: {
+            type: "box",
+            layout: "horizontal",
+            spacing: "sm",
+            contents: [
+              {
+                type: "text",
+                text: "Today usage",
+                color: "#8b8685",
+                size: "sm",
+                flex: 0
+              },
+              {
+                type: "text",
+                text: `฿${todayUsage.toFixed(2)}`,
+                color: "#8b8685",
+                size: "sm",
+                align: "end"
+              }
+            ]
+          }
         })
 
         const response = await fetch('https://api.line.me/v2/bot/message/reply', {
@@ -93,6 +132,7 @@ function createBubble(
     headerColor = '#d7fc70',
     textSize = 'xl',
     altText = String(text),
+    footer
   }: {
     headerBackground?: string
     headerColor?: string
@@ -123,6 +163,25 @@ function createBubble(
           ],
         }
         : text,
+  }
+  if (footer) {
+    data.styles!.footer = { backgroundColor: '#e9e8e7' }
+    data.footer =
+      typeof footer === 'string'
+        ? {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              {
+                type: 'text',
+                text: footer,
+                wrap: true,
+                size: 'sm',
+                color: '#8b8685',
+              },
+            ],
+          }
+        : footer
   }
   return {
     type: 'flex',
