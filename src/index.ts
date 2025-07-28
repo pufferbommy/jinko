@@ -81,6 +81,8 @@ app.post('/line-webhook', async (c) => {
       }
     }
   }
+
+  return c.text("Hello Hono!");
 })
 
 function createBubble(
