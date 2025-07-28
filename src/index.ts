@@ -102,7 +102,7 @@ app.post('/line-webhook', async (c) => {
           }
         })
 
-        const response = await fetch('https://api.line.me/v2/bot/message/reply', {
+        await fetch('https://api.line.me/v2/bot/message/reply', {
           method: "POST",
           headers: {
             'Content-Type': 'application/json',
@@ -114,15 +114,36 @@ app.post('/line-webhook', async (c) => {
           })
         })
 
-        console.log(await response.json())
-
         return c.text("Expense recorded");
+      } else {
+        await fetch('https://api.line.me/v2/bot/message/reply', {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+            "Authorization": `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+          },
+          body: JSON.stringify({
+            replyToken: event.replyToken,
+            messages: [{
+              type: "text",
+              text: getReply(message),
+            }]
+          })
+        })
       }
     }
   }
 
   return c.text("Hello Hono!");
 })
+
+function getReply(message: string) {
+  try {
+    return String(eval(message));
+  } catch(error) {
+    return String(error);
+  }
+}
 
 function createBubble(
   title: string,
