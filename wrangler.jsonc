@@ -6,10 +6,10 @@
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],
-  "vars": {
-    "AIR_TABLE_API_TOKEN": "pat3LpQDM3zGWouiK.7fe9ddd0574f28939e9332d8f4ff855a590a9721670cf4dbe1aee43cb3e098cf",
-    "LINE_CHANNEL_ACCESS_TOKEN": "YM/0lVTfAc0Ge/Gv/KXlYifU6KCrb8kPsUSapIV9N+0T+l0+YvnMntcoy0zpuKJpZupYUl5TKpnpbr7aYrhSXsh7c/kezZL11bVpAzoBbCZuT2HOky4xFfCwI7MjmPoA5S5a2CVW3rB6SupZzlk+4AdB04t89/1O/w1cDnyilFU="
-  },
+  // "vars": {
+  //   "AIR_TABLE_API_TOKEN": "",
+  //   "LINE_CHANNEL_ACCESS_TOKEN": ""
+  // },
   // "kv_namespaces": [
   //   {
   //     "binding": "MY_KV_NAMESPACE",
