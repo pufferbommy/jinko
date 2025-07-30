@@ -3,9 +3,9 @@
   "name": "jinko",
   "main": "src/index.ts",
   "compatibility_date": "2025-07-28",
-  // "compatibility_flags": [
-  //   "nodejs_compat"
-  // ],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   // "vars": {
   //   "AIR_TABLE_API_TOKEN": "",
   //   "LINE_CHANNEL_ACCESS_TOKEN": ""

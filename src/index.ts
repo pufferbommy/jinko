@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
-import { env } from 'hono/adapter'
 import Airtable from 'airtable'
-import { messagingApi } from '@line/bot-sdk'
+import * as line from '@line/bot-sdk';
+const MessagingApiClient = line.messagingApi.MessagingApiClient;
+import { env } from 'hono/adapter'
 
 interface Bindings {
   LINE_CHANNEL_ACCESS_TOKEN: string
@@ -17,13 +18,36 @@ app.get('/', (c) => {
 app.post('/line-webhook', async (c) => {
   const body = await c.req.json()
 
-  const { LINE_CHANNEL_ACCESS_TOKEN, AIR_TABLE_API_TOKEN } = env(c)
+  const { AIR_TABLE_API_TOKEN, LINE_CHANNEL_ACCESS_TOKEN } = env(c)
 
   for (const event of body.events) {
     if (event.type === "message") {
       const message: string = event.message.text;
 
-      if (message.match(/[\d.]+([tfml])$/)) {
+      if (/([\d.]+)?ppqr/.test(message)) {
+        const amount = parseFloat(message.replace(/[^\d.]+/, ''));
+        const client = new MessagingApiClient({
+          channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN
+        });
+        const promptpayId = '0942751668';
+        const imageUrl = amount
+          ? `https://promptpay.io/${promptpayId}/${amount}.png`
+          : `https://promptpay.io/${promptpayId}.png`;
+        await client.replyMessage({
+          replyToken: event.replyToken,
+          messages: [
+        {
+          type: "text",
+          text: amount ? `PromptPay QR for ฿${amount}` : "PromptPay QR"
+        },
+        {
+          type: "image",
+          originalContentUrl: imageUrl,
+          previewImageUrl: imageUrl
+        }
+          ]
+        });
+      } else if (/[\d.]+([tfml])$/.test(message)) {
         const category = {
           t: 'transportation',
           f: "food",
@@ -41,7 +65,7 @@ app.post('/line-webhook', async (c) => {
           Amount: amount
         });
 
-        const body: messagingApi.FlexBox = {
+        const body: line.messagingApi.FlexBox = {
           type: 'box',
           layout: 'vertical',
           contents: [
@@ -68,8 +92,8 @@ app.post('/line-webhook', async (c) => {
             const date = new Date(record.get('Date') as string);
             const today = new Date();
             if (date.getDate() === today.getDate() &&
-                date.getMonth() === today.getMonth() &&
-                date.getFullYear() === today.getFullYear()) {
+              date.getMonth() === today.getMonth() &&
+              date.getFullYear() === today.getFullYear()) {
               return acc + parseFloat(amount as string);
             }
           }
@@ -115,21 +139,6 @@ app.post('/line-webhook', async (c) => {
         })
 
         return c.text("Expense recorded");
-      } else {
-        await fetch('https://api.line.me/v2/bot/message/reply', {
-          method: "POST",
-          headers: {
-            'Content-Type': 'application/json',
-            "Authorization": `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
-          },
-          body: JSON.stringify({
-            replyToken: event.replyToken,
-            messages: [{
-              type: "text",
-              text: getReply(message),
-            }]
-          })
-        })
       }
     }
   }
@@ -137,17 +146,9 @@ app.post('/line-webhook', async (c) => {
   return c.text("Hello Hono!");
 })
 
-function getReply(message: string) {
-  try {
-    return String(eval(message));
-  } catch(error) {
-    return String(error);
-  }
-}
-
 function createBubble(
   title: string,
-  text: string | messagingApi.FlexBox,
+  text: string | line.messagingApi.FlexBox,
   {
     headerBackground = '#353433',
     headerColor = '#d7fc70',
@@ -157,12 +158,12 @@ function createBubble(
   }: {
     headerBackground?: string
     headerColor?: string
-    textSize?: messagingApi.FlexText['size']
+    textSize?: line.messagingApi.FlexText['size']
     altText?: string
-    footer?: string | messagingApi.FlexBox
+    footer?: string | line.messagingApi.FlexBox
   } = {}
-): messagingApi.FlexMessage {
-  const data: messagingApi.FlexContainer = {
+): line.messagingApi.FlexMessage {
+  const data: line.messagingApi.FlexContainer = {
     type: 'bubble',
     styles: {
       header: { backgroundColor: headerBackground },
@@ -190,18 +191,18 @@ function createBubble(
     data.footer =
       typeof footer === 'string'
         ? {
-            type: 'box',
-            layout: 'vertical',
-            contents: [
-              {
-                type: 'text',
-                text: footer,
-                wrap: true,
-                size: 'sm',
-                color: '#8b8685',
-              },
-            ],
-          }
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text',
+              text: footer,
+              wrap: true,
+              size: 'sm',
+              color: '#8b8685',
+            },
+          ],
+        }
         : footer
   }
   return {
