@@ -55,29 +55,21 @@ app.post('/line-webhook', async (c) => {
 
         const amount = parseFloat(message.replace(/[^\d.]+/, ''));
 
+        const base = new Airtable({ apiKey: AIR_TABLE_API_TOKEN }).base('appX2d3SZLf8Y1tEw');
+
+        const table = base('Table 1')
+
         try {
           console.log('Recording expense:', { category, amount });
-          const base = new Airtable({ apiKey: AIR_TABLE_API_TOKEN }).base('appX2d3SZLf8Y1tEw');
-
-          const table = base('Table 1')
 
           await table.create({
             Category: category,
             Amount: amount
           });
-        } catch(error) {
+        } catch (error) {
           console.error('Error creating Airtable record:', error);
           return c.text("Failed to record expense", 500);
         }
-
-        const base = new Airtable({ apiKey: AIR_TABLE_API_TOKEN }).base('appX2d3SZLf8Y1tEw');
-
-        const table = base('Table 1')
-
-        await table.create({
-          Category: category,
-          Amount: amount
-        });
 
         const body: line.messagingApi.FlexBox = {
           type: 'box',
@@ -139,6 +131,19 @@ app.post('/line-webhook', async (c) => {
             ]
           }
         })
+
+        try {
+          const client = new MessagingApiClient({
+            channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN
+          });
+          await client.replyMessage({
+            replyToken: event.replyToken,
+            messages: [bubble]
+          });
+        } catch (error) {
+          console.error('Error replying to message:', error);
+          return c.text("Failed to send reply", 500);
+        }
 
         const client = new MessagingApiClient({
           channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN

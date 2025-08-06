@@ -6,10 +6,10 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
-  // "vars": {
-  //   "AIR_TABLE_API_TOKEN": "",
-  //   "LINE_CHANNEL_ACCESS_TOKEN": ""
-  // },
+  "vars": {
+    "AIR_TABLE_API_TOKEN": "",
+    "LINE_CHANNEL_ACCESS_TOKEN": ""
+  },
   // "kv_namespaces": [
   //   {
   //     "binding": "MY_KV_NAMESPACE",
