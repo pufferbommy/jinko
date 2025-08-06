@@ -71,24 +71,6 @@ app.post('/line-webhook', async (c) => {
           return c.text("Failed to record expense", 500);
         }
 
-        const tableData = await table.select().all()
-
-        const todayUsage = tableData.reduce((acc, record) => {
-          const amount = record.get('Amount');
-
-          if (amount) {
-            const date = new Date(record.get('Date') as string);
-            const today = new Date();
-            if (date.getDate() === today.getDate() &&
-              date.getMonth() === today.getMonth() &&
-              date.getFullYear() === today.getFullYear()) {
-              return acc + parseFloat(amount as string);
-            }
-          }
-
-          return acc;
-        }, 0)
-
         const client = new MessagingApiClient({
             channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN
           });
@@ -97,7 +79,7 @@ app.post('/line-webhook', async (c) => {
           messages: [
             {
               type: "text",
-              text: `Expense recorded: ${category} - ฿${amount.toFixed(2)}; Today's total: ฿${todayUsage.toFixed(2)}`
+              text: `Expense recorded: ${category} - ฿${amount.toFixed(2)}`
             }
           ]
         });
