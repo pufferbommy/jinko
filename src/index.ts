@@ -80,7 +80,7 @@ app.post('/line-webhook', async (c) => {
           }
 
           return acc;
-        }, 0)
+        }, 0) + amount;
 
         await client.replyMessage({
           replyToken: event.replyToken,
