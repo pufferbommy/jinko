@@ -71,24 +71,6 @@ app.post('/line-webhook', async (c) => {
           return c.text("Failed to record expense", 500);
         }
 
-        const body: line.messagingApi.FlexBox = {
-          type: 'box',
-          layout: 'vertical',
-          contents: [
-            {
-              type: 'text',
-              text: '฿' + amount,
-              size: 'xxl',
-              weight: 'bold',
-            },
-            {
-              type: 'text',
-              text: `${category}\nrecorded`,
-              wrap: true,
-            },
-          ],
-        }
-
         const tableData = await table.select().all()
 
         const todayUsage = tableData.reduce((acc, record) => {
@@ -107,50 +89,17 @@ app.post('/line-webhook', async (c) => {
           return acc;
         }, 0)
 
-        const bubble = createBubble('expense tracking', body, {
-          headerColor: '#ffffbb',
-          footer: {
-            type: "box",
-            layout: "horizontal",
-            spacing: "sm",
-            contents: [
-              {
-                type: "text",
-                text: "Today usage",
-                color: "#8b8685",
-                size: "sm",
-                flex: 0
-              },
-              {
-                type: "text",
-                text: `฿${todayUsage.toFixed(2)}`,
-                color: "#8b8685",
-                size: "sm",
-                align: "end"
-              }
-            ]
-          }
-        })
-
-        try {
-          const client = new MessagingApiClient({
+        const client = new MessagingApiClient({
             channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN
           });
-          await client.replyMessage({
-            replyToken: event.replyToken,
-            messages: [bubble]
-          });
-        } catch (error) {
-          console.error('Error replying to message:', error);
-          return c.text("Failed to send reply", 500);
-        }
-
-        const client = new MessagingApiClient({
-          channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN
-        });
-        await client.replyMessage({
+         await client.replyMessage({
           replyToken: event.replyToken,
-          messages: [bubble]
+          messages: [
+            {
+              type: "text",
+              text: `Expense recorded: ${category} - ฿${amount.toFixed(2)}; Today's total: ฿${todayUsage.toFixed(2)}`
+            }
+          ]
         });
 
         return c.text("Expense recorded");
@@ -160,77 +109,5 @@ app.post('/line-webhook', async (c) => {
 
   return c.text("Hello Line Bot!");
 })
-
-function createBubble(
-  title: string,
-  text: string | line.messagingApi.FlexBox,
-  {
-    headerBackground = '#353433',
-    headerColor = '#d7fc70',
-    textSize = 'xl',
-    altText = String(text),
-    footer
-  }: {
-    headerBackground?: string
-    headerColor?: string
-    textSize?: line.messagingApi.FlexText['size']
-    altText?: string
-    footer?: string | line.messagingApi.FlexBox
-  } = {}
-): line.messagingApi.FlexMessage {
-  const data: line.messagingApi.FlexContainer = {
-    type: 'bubble',
-    styles: {
-      header: { backgroundColor: headerBackground },
-    },
-    header: {
-      type: 'box',
-      layout: 'vertical',
-      contents: [
-        { type: 'text', text: title, color: headerColor, weight: 'bold' },
-      ],
-    },
-    body:
-      typeof text === 'string'
-        ? {
-          type: 'box',
-          layout: 'vertical',
-          contents: [
-            { type: 'text', text: text, wrap: true, size: textSize },
-          ],
-        }
-        : text,
-  }
-  if (footer) {
-    data.styles!.footer = { backgroundColor: '#e9e8e7' }
-    data.footer =
-      typeof footer === 'string'
-        ? {
-          type: 'box',
-          layout: 'vertical',
-          contents: [
-            {
-              type: 'text',
-              text: footer,
-              wrap: true,
-              size: 'sm',
-              color: '#8b8685',
-            },
-          ],
-        }
-        : footer
-  }
-  return {
-    type: 'flex',
-    altText: truncate(`[${title}] ${altText}`, 400),
-    contents: data,
-  }
-}
-
-function truncate(text: string, maxLength: number) {
-  return text.length + 5 > maxLength
-    ? text.slice(0, maxLength - 5) + '…'
-    : text
-}
 
 export default app
