@@ -59,16 +59,88 @@ app.post('/line-webhook', async (c) => {
 
         const table = base('Table 1')
 
-                const client = new MessagingApiClient({
-            channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN
-          });
-         await client.replyMessage({
-          replyToken: event.replyToken,
-          messages: [
-            {
-              type: "text",
-              text: `Expense recorded: ${category} - ฿${amount.toFixed(2)}`
+        const client = new MessagingApiClient({
+          channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN
+        });
+
+
+        const tableData = await table.select().all()
+
+        const todayUsage = tableData.reduce((acc, record) => {
+          const amount = record.get('Amount');
+
+          if (amount) {
+            const date = new Date(record.get('Date') as string);
+            const today = new Date();
+            if (date.getDate() === today.getDate() &&
+              date.getMonth() === today.getMonth() &&
+              date.getFullYear() === today.getFullYear()) {
+              return acc + parseFloat(amount as string);
             }
+          }
+
+          return acc;
+        }, 0)
+
+        await client.replyMessage({
+          replyToken: event.replyToken,
+          messages: [{
+            type: "flex",
+            altText: "Expense Tracking",
+            contents: {
+              "type": "bubble",
+              "header": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "Expense Tracking",
+                    "color": "#FFFFFF"
+                  }
+                ],
+                "backgroundColor": "#000000"
+              },
+              "body": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": `฿${amount.toFixed(2)}`,
+                    "weight": "bold",
+                    "size": "xl"
+                  },
+                  {
+                    "type": "text",
+                    "text": "Food"
+                  },
+                  {
+                    "type": "text",
+                    "text": "Recorded"
+                  }
+                ]
+              },
+              "footer": {
+                "type": "box",
+                "layout": "horizontal",
+                "contents": [
+                  {
+                    "type": "text",
+                    "text": "Today Usage",
+                    "color": "#FFFFFF"
+                  },
+                  {
+                    "type": "text",
+                    "text": `฿${todayUsage.toFixed(2)}`,
+                    "color": "#FFFFFF",
+                    "align": "end"
+                  }
+                ],
+                "backgroundColor": "#000000"
+              }
+            },
+          }
           ]
         });
 
