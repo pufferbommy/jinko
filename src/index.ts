@@ -11,9 +11,7 @@ interface Bindings {
 
 const app = new Hono<{ Bindings: Bindings }>()
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
+app.get('/', (c) => c.text('Hello Hono!'))
 
 app.post('/line-webhook', async (c) => {
   const body = await c.req.json()
@@ -24,7 +22,7 @@ app.post('/line-webhook', async (c) => {
     if (event.type === "message") {
       const message: string = event.message.text;
 
-      if (/([\d.]+)?ppqr/.test(message)) {
+      if (/([\d.]+)?pp/.test(message)) {
         const amount = parseFloat(message.replace(/[^\d.]+/, ''));
         const client = new MessagingApiClient({
           channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN
@@ -36,17 +34,18 @@ app.post('/line-webhook', async (c) => {
         await client.replyMessage({
           replyToken: event.replyToken,
           messages: [
-        {
-          type: "text",
-          text: amount ? `PromptPay QR for ฿${amount}` : "PromptPay QR"
-        },
-        {
-          type: "image",
-          originalContentUrl: imageUrl,
-          previewImageUrl: imageUrl
-        }
+            {
+              type: "text",
+              text: amount ? `PromptPay QR to ${promptpayId} for ฿${amount.toFixed(2)}` : `PromptPay QR to ${promptpayId}`
+            },
+            {
+              type: "image",
+              originalContentUrl: imageUrl,
+              previewImageUrl: imageUrl
+            }
           ]
         });
+        return c.text("PromptPay QR sent");
       } else if (/[\d.]+([tfml])$/.test(message)) {
         const category = {
           t: 'transportation',
@@ -126,24 +125,20 @@ app.post('/line-webhook', async (c) => {
           }
         })
 
-        await fetch('https://api.line.me/v2/bot/message/reply', {
-          method: "POST",
-          headers: {
-            'Content-Type': 'application/json',
-            "Authorization": `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
-          },
-          body: JSON.stringify({
-            replyToken: event.replyToken,
-            messages: [bubble]
-          })
-        })
+        const client = new MessagingApiClient({
+          channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN
+        });
+        await client.replyMessage({
+          replyToken: event.replyToken,
+          messages: [bubble]
+        });
 
         return c.text("Expense recorded");
       }
     }
   }
 
-  return c.text("Hello Hono!");
+  return c.text("Hello Line Bot!");
 })
 
 function createBubble(
