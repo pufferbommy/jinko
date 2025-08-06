@@ -59,6 +59,19 @@ app.post('/line-webhook', async (c) => {
 
         const table = base('Table 1')
 
+                const client = new MessagingApiClient({
+            channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN
+          });
+         await client.replyMessage({
+          replyToken: event.replyToken,
+          messages: [
+            {
+              type: "text",
+              text: `Expense recorded: ${category} - ฿${amount.toFixed(2)}`
+            }
+          ]
+        });
+
         try {
           console.log('Recording expense:', { category, amount });
 
@@ -71,18 +84,7 @@ app.post('/line-webhook', async (c) => {
           return c.text("Failed to record expense", 500);
         }
 
-        const client = new MessagingApiClient({
-            channelAccessToken: LINE_CHANNEL_ACCESS_TOKEN
-          });
-         await client.replyMessage({
-          replyToken: event.replyToken,
-          messages: [
-            {
-              type: "text",
-              text: `Expense recorded: ${category} - ฿${amount.toFixed(2)}`
-            }
-          ]
-        });
+
 
         return c.text("Expense recorded");
       }
